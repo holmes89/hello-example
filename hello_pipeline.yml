@@ -18,18 +18,11 @@ jobs:
   plan:
   - get: hello-code
     trigger: true
-  - put: gh-release
-    params:
-      name: hello-example/name.txt
-      tag: hello-example/tag.txt
-      globs:
-        - hello-example/hello_linux_amd64
-        - hello-example/hello_linux-arm64
   - task: build
     config:
       platform: linux
       inputs:
-        - name: hello-example
+        - name: hello-code
           path: /hello-example
       image_resource:
         type: docker-image
@@ -45,3 +38,10 @@ jobs:
             echo "$(git rev-parse --short HEAD)" > tag.txt
             GOOS=linux GOARCH=amd64 go build -o hello_linux_amd64
             GOOS=linux GOARCH=arm64 go build -o hello_linux_arm64
+  - put: gh-release
+    params:
+      name: hello-example/name.txt
+      tag: hello-example/tag.txt
+      globs:
+        - hello-example/hello_linux_amd64
+        - hello-example/hello_linux-arm64

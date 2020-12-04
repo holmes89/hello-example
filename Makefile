@@ -6,3 +6,12 @@ package:
 ship:
 	cd terraform && \
 	terraform apply -auto-approve -var "hello_ami=$(AMI)"
+
+certs:
+	certstrap init --passphrase "" --cn vault-ca && \
+	certstrap request-cert --passphrase "" --domain vault --ip 127.0.0.1 && \
+	certstrap sign vault --CA vault-ca && \
+	certstrap request-cert --passphrase "" --cn concourse && \
+	certstrap sign concourse --CA vault-ca && \
+	mv out vault-certs && \
+	chmod +r vault-certs/*

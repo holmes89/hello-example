@@ -14,13 +14,12 @@ sudo chmod +x /usr/local/bin/certstrap
 
 ```
 certstrap init --cn vault-ca
-certstrap request-cert --cn concourse
-certstrap init --cn vault-ca
 certstrap request-cert --domain vault --ip 127.0.0.1
 certstrap sign vault --CA vault-ca
 certstrap request-cert --cn concourse
 certstrap sign concourse --CA vault-ca
 mv out vault-certs
+chmod +r vault-certs/*
 ```
 
 - Login to Vault
@@ -52,7 +51,9 @@ Note: all secrets reference `value` by default, use (`github.pub` for `concourse
 ## Running Go Example
 
 - `vault kv put concourse/main/github private-key="$(cat ~/.ssh/YOUR_PRIVATE_KEY)"`
-- `fly -t personal-example set-pipeline -c chess_pipeline.yml -p chess`
+- `vault kv put concourse/main/github access-token="GITHUB_TOKEN"`
+- `fly --target hello login --concourse-url http://127.0.0.1:8080 -u admin -p admin`
+- `fly -t hello set-pipeline -c hello_pipeline.yml -p hello`
 
 
 ## Sources
