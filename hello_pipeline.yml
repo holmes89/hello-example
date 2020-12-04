@@ -23,7 +23,7 @@ jobs:
       platform: linux
       inputs:
         - name: hello-code
-          path: /hello-example
+          path: .
       image_resource:
         type: docker-image
         source: {repository: golang}
@@ -32,16 +32,42 @@ jobs:
         args:
           - -c
           - |
-            cd hello-example
             go get ./...
-            echo "Hello API" > name.txt
-            echo "$(git rev-parse --short HEAD)" > tag.txt
-            GOOS=linux GOARCH=amd64 go build -o hello_linux_amd64
-            GOOS=linux GOARCH=arm64 go build -o hello_linux_arm64
+            echo "Hello API" > ./meta/name.txt
+            echo "$(git rev-parse --short HEAD)" > ./meta/tag.txt
+            GOOS=linux GOARCH=amd64 go build -o ./dist/hello_linux_amd64
+            GOOS=linux GOARCH=arm64 go build -o ./dist/hello_linux_arm64
+      outputs:
+        - name: dist
+        - name: meta
+  - task: pack-amd64
+    config:
+      platform: linux
+      params:
+         AWS_ACCESS_KEY_ID: ((aws.access-key)) 
+         AWS_SECRET_ACCESS_KEY: ((aws.secret-access-key))
+      inputs:
+        - name: hello-code
+        - name: dist
+      outputs:
+        - name: packer-manifest-amd64
+      image_resource:
+        type: registry-image
+        source: { repository: hashicorp/packer, tag: light }
+      run:
+        path: /bin/sh
+        args:
+          - -c
+          - |
+            ls
+            cp dist/hello_linux_amd64 hello-code/.
+            cd hello-code
+            ls
+            packer build -force -machine-readable -var "git_sha=$(git rev-parse --short HEAD)" -var "aws_access_key=$AWS_ACCESS_KEY_ID" -var "aws_secret_key=$AWS_SECRET_ACCESS_KEY" hello-image-amd64.pkr.hcl
+            cp manifest.json ../packer-manifest-amd64
   - put: gh-release
     params:
-      name: hello-example/name.txt
-      tag: hello-example/tag.txt
+      name: meta/name.txt
+      tag: meta/tag.txt
       globs:
-        - hello-example/hello_linux_amd64
-        - hello-example/hello_linux-arm64
+        - dist/*

@@ -13,7 +13,7 @@ variable "git_sha" {
 
 source "amazon-ebs" "hello" {
   access_key    = "${var.aws_access_key}"
-  ami_name      = "hello-${var.git_sha}"
+  ami_name      = "hello-${var.git_sha}-amd64"
   instance_type = "t3.nano"
   region        = "us-east-2"
   secret_key    = "${var.aws_secret_key}"
@@ -25,8 +25,8 @@ build {
   sources = ["source.amazon-ebs.hello"]
 
   provisioner "file" {
-    destination = "/home/ubuntu/"
-    source      = "hello"
+    destination = "/home/ubuntu/hello"
+    source      = "hello_linux_amd64"
   }
 
   post-processor "manifest" {
