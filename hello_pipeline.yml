@@ -80,6 +80,7 @@ jobs:
         args:
           - -c
           - |
+            apk add --no-cache jq
             export AMI=$(jq -r '.builds[0].artifact_id|split(":")[1]' ./packer-manifest-amd64/manifest.json)
             cd hello-code/terraform
             terraform init
