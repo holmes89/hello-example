@@ -20,7 +20,7 @@ resource "aws_security_group" "hello_traffic" {
 }
 
 resource "aws_instance" "hello" {
-  ami           = "${var.hello_ami}"
+  ami           = var.hello_ami
   instance_type = "t3.micro"
   security_groups = ["hello_traffic", "default"]
   key_name = "debug"
