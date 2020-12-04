@@ -2,6 +2,10 @@ provider "aws" {
   region = "us-east-2"
 }
 
+variable "hello_ami" {
+  type = string
+}
+
 resource "aws_security_group" "hello_traffic" {
   name        = "hello_traffic"
   description = "Allow all inbound traffic"
@@ -16,7 +20,7 @@ resource "aws_security_group" "hello_traffic" {
 }
 
 resource "aws_instance" "hello" {
-  ami           = "ami-07eaad496802df3b9"
+  ami           = "${var.hello_ami}"
   instance_type = "t3.micro"
   security_groups = ["hello_traffic", "default"]
   key_name = "debug"
