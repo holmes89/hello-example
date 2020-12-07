@@ -47,6 +47,12 @@ vault kv put concourse/main/hello value=world
 
 Note: all secrets reference `value` by default, use (`github.pub` for `concourse/main/github pub=somesecret`)
 
+- Create TF State (only once). Will need to be a unique bucket. Refereneced throughout the project.
+```
+cd terraform/global/s3
+terraform init
+terraform apply
+```
 
 ## Running Go Example
 

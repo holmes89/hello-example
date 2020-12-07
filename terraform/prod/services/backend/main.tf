@@ -6,6 +6,16 @@ variable "hello_ami" {
   type = string
 }
 
+terraform {  
+  backend "s3" {    
+    bucket         = "hello-example-state"
+    key            = "global/s3/terraform.tfstate"
+    region         = "us-east-2"   
+    dynamodb_table = "hello-example-locks" 
+    encrypt        = true  
+  }
+}
+
 resource "aws_security_group" "hello_traffic" {
   name        = "hello_traffic"
   description = "Allow all inbound traffic"
