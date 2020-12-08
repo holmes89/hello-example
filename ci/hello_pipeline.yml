@@ -18,7 +18,7 @@ jobs:
   plan:
   - get: hello-code
     trigger: true
-  - task: build
+  - task: run-lint
     config:
       platform: linux
       inputs:
@@ -36,7 +36,7 @@ jobs:
   - get: hello-code
     trigger: true
     passed: [lint]
-  - task: build
+  - task: run-test
     config:
       caches:
         - path: gopath/
