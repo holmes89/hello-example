@@ -1,0 +1,131 @@
+---
+resources:
+  - name: hello-code
+    type: git
+    source:
+      uri: git@github.com:holmes89/hello-example.git
+      branch: main
+      private_key: ((github.private-key)) #NOT NEEDED FOR THIS EXAMPLE
+  - name: gh-release
+    type: github-release
+    source:
+      owner: holmes89
+      repository: hello-example
+      access_token: ((github.access-token))
+
+jobs:
+- name: build-binary
+  plan:
+  - get: hello-code
+    trigger: true
+  - task: build
+    config:
+      platform: linux
+      inputs:
+        - name: hello-code
+          path: .
+      image_resource:
+        type: docker-image
+        source: {repository: golang}
+      run:
+        path: /bin/sh #TODO replace with script ci dir
+        args: ./ci/test.sh
+- name: test
+  plan:
+  - get: hello-code
+    passed: [lint]
+  - task: build
+    config:
+      platform: linux
+      inputs:
+        - name: hello-code
+          path: .
+      image_resource:
+        type: docker-image
+        source: {repository: golang}
+      run:
+        path: /bin/sh
+        args: ./ci/test.sh
+- name: build-binary
+  plan:
+  - get: hello-code
+    passed: [test]
+  - task: build
+    config:
+      platform: linux
+      inputs:
+        - name: hello-code
+          path: .
+      image_resource:
+        type: docker-image
+        source: {repository: golang}
+      run:
+        path: /bin/sh
+        args:
+          - -c
+          - |
+            go get ./...
+            echo "Hello API" > ./meta/name.txt
+            echo "$(git rev-parse --short HEAD)" > ./meta/tag.txt
+            GOOS=linux GOARCH=amd64 go build -o ./dist/hello_linux_amd64 cmd/server/main.go
+            GOOS=linux GOARCH=arm64 go build -o ./dist/hello_linux_arm64 cmd/server/main.go
+      outputs:
+        - name: dist
+        - name: meta
+  - put: gh-release
+    params:
+      name: meta/name.txt
+      tag: meta/tag.txt
+      globs:
+        - dist/*
+- name: deploy-amd64-server
+  plan:
+    - get: gh-release
+      passed: [build-binary]
+      trigger: true
+    - get: hello-code
+    - task: pack-amd64 
+      config:
+        platform: linux
+        params:
+          AWS_ACCESS_KEY_ID: ((aws.access-key)) 
+          AWS_SECRET_ACCESS_KEY: ((aws.secret-access-key))
+        inputs:
+          - name: hello-code
+          - name: gh-release
+        outputs:
+          - name: packer-manifest-amd64
+        image_resource:
+          type: registry-image
+          source: { repository: hashicorp/packer, tag: light }
+        run:
+          path: /bin/sh
+          args:
+            - -c
+            - |
+              cp gh-release/hello_linux_amd64 hello-code/.
+              cd hello-code
+              packer build -force -machine-readable -var "git_sha=$(git rev-parse --short HEAD)" -var "aws_access_key=$AWS_ACCESS_KEY_ID" -var "aws_secret_key=$AWS_SECRET_ACCESS_KEY" hello-image-amd64.pkr.hcl
+              cp manifest.json ../packer-manifest-amd64
+    - task: deploy-amd64
+      config:
+        platform: linux
+        params:
+          AWS_ACCESS_KEY_ID: ((aws.access-key)) 
+          AWS_SECRET_ACCESS_KEY: ((aws.secret-access-key))
+        inputs:
+          - name: hello-code
+          - name: packer-manifest-amd64
+        image_resource:
+          type: registry-image
+          source: { repository: hashicorp/terraform, tag: light }
+        run:
+          path: /bin/sh
+          args:
+            - -c
+            - |
+              apk add --no-cache jq
+              export AMI=$(jq -r '.builds[0].artifact_id|split(":")[1]' ./packer-manifest-amd64/manifest.json)
+              cd hello-code/terraform/prod/services/backend
+              terraform init
+              terraform apply -auto-approve -var "hello_ami=$AMI"
