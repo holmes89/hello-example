@@ -16,6 +16,6 @@ module "backend" {
     source = "../../../../modules/services/backend"
 
     server_name = var.server_name
-    instance_type = "t3.nano"
+    instance_type = "t3a.nano"
     ami = var.ami
 }
