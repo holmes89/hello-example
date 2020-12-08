@@ -143,7 +143,7 @@ jobs:
           AWS_ACCESS_KEY_ID: ((aws.access-key)) 
           AWS_SECRET_ACCESS_KEY: ((aws.secret-access-key))
           BUILD_TYPE: arm64
-          INSTANCE_TYPE: a1.medium
+          INSTANCE_TYPE: t4g.nano
           AMI: ami-0742a572c2ce45ebf
         inputs:
           - name: hello-code
