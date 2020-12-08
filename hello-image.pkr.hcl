@@ -6,6 +6,18 @@ variable "aws_secret_key" {
   type    = string
 }
 
+variable "build_type" {
+  type    = string
+}
+
+variable "instance_type" {
+  type    = string
+}
+
+variable "ami" {
+  type    = string
+}
+
 variable "git_sha" {
   type    = string
   default = "UNKNOWN"
