@@ -4,8 +4,7 @@ set -e
 export GOPATH=$PWD/gopath
 export PATH=$PWD/gopath/bin:$PATH
 
-ls 
-cd hello-example
+cd hello-code
 
 go get -t ./...
 go vet ./...

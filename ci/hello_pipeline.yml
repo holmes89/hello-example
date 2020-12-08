@@ -20,17 +20,18 @@ jobs:
     trigger: true
   - task: run-lint
     config:
+      caches:
+        - path: gopath/
       platform: linux
       inputs:
         - name: hello-code
-          path: .
       image_resource:
         type: docker-image
         source: {repository: golang}
       run:
         path: /bin/sh #TODO replace with script ci dir
         args: 
-          - ./ci/lint.sh
+          - ./hello-code/ci/lint.sh
 - name: test
   plan:
   - get: hello-code
@@ -49,7 +50,7 @@ jobs:
       run:
         path: /bin/sh
         args: 
-          - ./ci/test.sh
+          - ./hello-code/ci/test.sh
 - name: build-binary
   plan:
   - get: hello-code
@@ -70,6 +71,7 @@ jobs:
         args:
           - -c
           - |
+            cd hello-code
             go get ./...
             echo "Hello API" > ./meta/name.txt
             echo "$(git rev-parse --short HEAD)" > ./meta/tag.txt
