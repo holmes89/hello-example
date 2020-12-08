@@ -14,7 +14,7 @@ resources:
       access_token: ((github.access-token))
 
 jobs:
-- name: build-binary
+- name: lint
   plan:
   - get: hello-code
     trigger: true
@@ -29,33 +29,39 @@ jobs:
         source: {repository: golang}
       run:
         path: /bin/sh #TODO replace with script ci dir
-        args: ./ci/test.sh
+        args: 
+          - ./ci/lint.sh
 - name: test
   plan:
   - get: hello-code
+    trigger: true
     passed: [lint]
   - task: build
     config:
+      caches:
+        - path: gopath/
       platform: linux
       inputs:
         - name: hello-code
-          path: .
       image_resource:
         type: docker-image
         source: {repository: golang}
       run:
         path: /bin/sh
-        args: ./ci/test.sh
+        args: 
+          - ./ci/test.sh
 - name: build-binary
   plan:
   - get: hello-code
+    trigger: true
     passed: [test]
   - task: build
     config:
+      caches:
+        - path: gopath/
       platform: linux
       inputs:
         - name: hello-code
-          path: .
       image_resource:
         type: docker-image
         source: {repository: golang}
