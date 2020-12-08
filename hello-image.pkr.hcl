@@ -38,7 +38,7 @@ build {
 
   provisioner "file" {
     destination = "/home/ubuntu/hello"
-    source      = "hello_linux_amd64"
+    source      = "hello_linux_${var.build_type}"
   }
 
   post-processor "manifest" {
