@@ -14,7 +14,7 @@ resources:
       access_token: ((github.access-token))
 
 jobs:
-- name: build
+- name: build binary
   plan:
   - get: hello-code
     trigger: true
@@ -40,55 +40,58 @@ jobs:
       outputs:
         - name: dist
         - name: meta
-  - task: pack-amd64 #TODO pull from release instead of piping these altogether
-    config:
-      platform: linux
-      params:
-         AWS_ACCESS_KEY_ID: ((aws.access-key)) 
-         AWS_SECRET_ACCESS_KEY: ((aws.secret-access-key))
-      inputs:
-        - name: hello-code
-        - name: dist
-      outputs:
-        - name: packer-manifest-amd64
-      image_resource:
-        type: registry-image
-        source: { repository: hashicorp/packer, tag: light }
-      run:
-        path: /bin/sh
-        args:
-          - -c
-          - |
-            cp dist/hello_linux_amd64 hello-code/.
-            cd hello-code
-            packer build -force -machine-readable -var "git_sha=$(git rev-parse --short HEAD)" -var "aws_access_key=$AWS_ACCESS_KEY_ID" -var "aws_secret_key=$AWS_SECRET_ACCESS_KEY" hello-image-amd64.pkr.hcl
-            cp manifest.json ../packer-manifest-amd64
-  - task: deploy-amd64 #TODO pull from release instead of piping these altogether
-    config:
-      platform: linux
-      params:
-        AWS_ACCESS_KEY_ID: ((aws.access-key)) 
-        AWS_SECRET_ACCESS_KEY: ((aws.secret-access-key))
-      inputs:
-        - name: hello-code
-        - name: packer-manifest-amd64
-      image_resource:
-        type: registry-image
-        source: { repository: hashicorp/terraform, tag: light }
-      run:
-        path: /bin/sh # TODO state file
-        args:
-          - -c
-          - |
-            apk add --no-cache jq
-            export AMI=$(jq -r '.builds[0].artifact_id|split(":")[1]' ./packer-manifest-amd64/manifest.json)
-            cd hello-code/terraform
-            terraform init
-            terraform apply -auto-approve -var "hello_ami=$AMI"
-
   - put: gh-release
     params:
       name: meta/name.txt
       tag: meta/tag.txt
       globs:
         - dist/*
+- name: deploy amd64 server
+  plan:
+    - get: gh-release
+      trigger: true
+      - task: pack-amd64 
+        config:
+          platform: linux
+          params:
+            AWS_ACCESS_KEY_ID: ((aws.access-key)) 
+            AWS_SECRET_ACCESS_KEY: ((aws.secret-access-key))
+          inputs:
+            - name: hello-code
+            - name: gh-release
+          outputs:
+            - name: packer-manifest-amd64
+          image_resource:
+            type: registry-image
+            source: { repository: hashicorp/packer, tag: light }
+          run:
+            path: /bin/sh
+            args:
+              - -c
+              - |
+                cp gh-release/hello_linux_amd64 hello-code/.
+                cd hello-code
+                packer build -force -machine-readable -var "git_sha=$(git rev-parse --short HEAD)" -var "aws_access_key=$AWS_ACCESS_KEY_ID" -var "aws_secret_key=$AWS_SECRET_ACCESS_KEY" hello-image-amd64.pkr.hcl
+                cp manifest.json ../packer-manifest-amd64
+      - task: deploy-amd64
+        config:
+          platform: linux
+          params:
+            AWS_ACCESS_KEY_ID: ((aws.access-key)) 
+            AWS_SECRET_ACCESS_KEY: ((aws.secret-access-key))
+          inputs:
+            - name: hello-code
+            - name: packer-manifest-amd64
+          image_resource:
+            type: registry-image
+            source: { repository: hashicorp/terraform, tag: light }
+          run:
+            path: /bin/sh # TODO state file
+            args:
+              - -c
+              - |
+                apk add --no-cache jq
+                export AMI=$(jq -r '.builds[0].artifact_id|split(":")[1]' ./packer-manifest-amd64/manifest.json)
+                cd hello-code/terraform
+                terraform init
+                terraform apply -auto-approve -var "hello_ami=$AMI"
