@@ -13,11 +13,11 @@ variable "git_sha" {
 
 source "amazon-ebs" "hello" {
   access_key    = "${var.aws_access_key}"
-  ami_name      = "hello-${var.git_sha}-amd64"
-  instance_type = "t3.nano"
+  ami_name      = "hello-${var.git_sha}-${var.build_type}"
+  instance_type = "${var.instance_type}"
   region        = "us-east-2"
   secret_key    = "${var.aws_secret_key}"
-  source_ami    = "ami-0a91cd140a1fc148a"
+  source_ami    = "${var.ami}"
   ssh_username  = "ubuntu"
 }
 
