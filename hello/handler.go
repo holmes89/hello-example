@@ -22,7 +22,6 @@ func (h *WordHandler) Find(w http.ResponseWriter, r *http.Request) {
 	languages := r.URL.Query()["language"]
 	res := h.service.GetHellos(languages)
 	encodeResponse(w, res)
-	return
 }
 
 // LanguageHandler will list all languages in the system
@@ -41,7 +40,6 @@ func NewLanguageHandler(service *LanguageService) *LanguageHandler {
 func (h *LanguageHandler) List(w http.ResponseWriter, r *http.Request) {
 	res := h.service.ListLanguages()
 	encodeResponse(w, res)
-	return
 }
 
 func encodeResponse(w http.ResponseWriter, response interface{}) {
