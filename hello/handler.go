@@ -5,33 +5,39 @@ import (
 	"net/http"
 )
 
-type HelloHandler struct {
+// WordHandler holds service for finding language results
+type WordHandler struct {
 	service *LanguageService
 }
 
-func NewHelloHandler(service *LanguageService) *HelloHandler {
-	return &HelloHandler{
+// NewHelloHandler instanciates a new handler
+func NewHelloHandler(service *LanguageService) *WordHandler {
+	return &WordHandler{
 		service: service,
 	}
 }
 
-func (h *HelloHandler) Find(w http.ResponseWriter, r *http.Request) {
+// Find will fetch hello in a given list of languages
+func (h *WordHandler) Find(w http.ResponseWriter, r *http.Request) {
 	languages := r.URL.Query()["language"]
 	res := h.service.GetHellos(languages)
 	encodeResponse(w, res)
 	return
 }
 
+// LanguageHandler will list all languages in the system
 type LanguageHandler struct {
 	service *LanguageService
 }
 
+// NewLanguageHandler instanciates a new handler
 func NewLanguageHandler(service *LanguageService) *LanguageHandler {
 	return &LanguageHandler{
 		service: service,
 	}
 }
 
+// List will return all languages
 func (h *LanguageHandler) List(w http.ResponseWriter, r *http.Request) {
 	res := h.service.ListLanguages()
 	encodeResponse(w, res)

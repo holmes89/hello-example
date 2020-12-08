@@ -5,11 +5,13 @@ import (
 	"strings"
 )
 
+// LanguageService provides the ability to find languages and hello in that language
 type LanguageService struct {
 	languageMap map[string]string
 	languages   []string
 }
 
+// NewLanguageService creates the service by loading prefconfigured file
 func NewLanguageService() *LanguageService {
 	type helloStruct struct {
 		Language string `json:"language"`
@@ -32,10 +34,12 @@ func NewLanguageService() *LanguageService {
 	}
 }
 
+// ListLanguages returns all kesy in the language map
 func (s *LanguageService) ListLanguages() []string {
 	return s.languages
 }
 
+// GetHellos will return all languages if no filters are provided.
 func (s *LanguageService) GetHellos(languages []string) map[string]string {
 	//TODO lower languages
 	if len(languages) == 0 {
