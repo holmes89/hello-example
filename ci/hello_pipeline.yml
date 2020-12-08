@@ -29,7 +29,7 @@ jobs:
         type: docker-image
         source: {repository: golang}
       run:
-        path: /bin/sh #TODO replace with script ci dir
+        path: /bin/sh
         args: 
           - ./hello-code/ci/lint.sh
 - name: test
@@ -71,12 +71,12 @@ jobs:
         args:
           - -c
           - |
-            cd hello-code
-            go get ./...
             echo "Hello API" > ./meta/name.txt
-            echo "$(git rev-parse --short HEAD)" > ./meta/tag.txt
-            GOOS=linux GOARCH=amd64 go build -o ./dist/hello_linux_amd64 cmd/server/main.go
-            GOOS=linux GOARCH=arm64 go build -o ./dist/hello_linux_arm64 cmd/server/main.go
+            cd hello-code
+            echo "$(git rev-parse --short HEAD)" > ../meta/tag.txt
+            go get ./...
+            GOOS=linux GOARCH=amd64 go build -o ../dist/hello_linux_amd64 cmd/server/main.go
+            GOOS=linux GOARCH=arm64 go build -o ../dist/hello_linux_arm64 cmd/server/main.go
       outputs:
         - name: dist
         - name: meta
@@ -109,12 +109,9 @@ jobs:
         run:
           path: /bin/sh
           args:
-            - -c
-            - |
-              cp gh-release/hello_linux_amd64 hello-code/.
-              cd hello-code
-              packer build -force -machine-readable -var "git_sha=$(git rev-parse --short HEAD)" -var "aws_access_key=$AWS_ACCESS_KEY_ID" -var "aws_secret_key=$AWS_SECRET_ACCESS_KEY" hello-image-amd64.pkr.hcl
-              cp manifest.json ../packer-manifest-amd64
+            - ./hello-code/ci/packer-build.sh
+          params:
+            BUILD_TYPE: amd64
     - task: deploy-amd64
       config:
         platform: linux
@@ -130,10 +127,50 @@ jobs:
         run:
           path: /bin/sh
           args:
-            - -c
-            - |
-              apk add --no-cache jq
-              export AMI=$(jq -r '.builds[0].artifact_id|split(":")[1]' ./packer-manifest-amd64/manifest.json)
-              cd hello-code/terraform/prod/services/backend
-              terraform init
-              terraform apply -auto-approve -var "hello_ami=$AMI"
+            - ./hello-code/ci/terraform-deploy-server.sh
+          params:
+            BUILD_TYPE: amd64
+- name: deploy-arm64-server
+  plan:
+    - get: gh-release
+      passed: [build-binary]
+      trigger: true
+    - get: hello-code
+    - task: pack-arm64 
+      config:
+        platform: linux
+        params:
+          AWS_ACCESS_KEY_ID: ((aws.access-key)) 
+          AWS_SECRET_ACCESS_KEY: ((aws.secret-access-key))
+        inputs:
+          - name: hello-code
+          - name: gh-release
+        outputs:
+          - name: packer-manifest-arm64
+        image_resource:
+          type: registry-image
+          source: { repository: hashicorp/packer, tag: light }
+        run:
+          path: /bin/sh
+          args:
+            - ./hello-code/ci/packer-build.sh
+          params:
+            BUILD_TYPE: arm64
+    - task: deploy-arm64
+      config:
+        platform: linux
+        params:
+          AWS_ACCESS_KEY_ID: ((aws.access-key)) 
+          AWS_SECRET_ACCESS_KEY: ((aws.secret-access-key))
+        inputs:
+          - name: hello-code
+          - name: packer-manifest-arm64
+        image_resource:
+          type: registry-image
+          source: { repository: hashicorp/terraform, tag: light }
+        run:
+          path: /bin/sh
+          args:
+            - ./hello-code/ci/terraform-deploy-server.sh
+          params:
+            BUILD_TYPE: arm64
