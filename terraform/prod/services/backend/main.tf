@@ -9,7 +9,7 @@ variable "hello_ami" {
 terraform {  
   backend "s3" {    
     bucket         = "hello-example-state"
-    key            = "global/s3/terraform.tfstate"
+    key            = "prod/services/backend/terraform.tfstate"
     region         = "us-east-2"   
     dynamodb_table = "hello-example-locks" 
     encrypt        = true  

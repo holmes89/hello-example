@@ -35,8 +35,8 @@ jobs:
             go get ./...
             echo "Hello API" > ./meta/name.txt
             echo "$(git rev-parse --short HEAD)" > ./meta/tag.txt
-            GOOS=linux GOARCH=amd64 go build -o ./dist/hello_linux_amd64
-            GOOS=linux GOARCH=arm64 go build -o ./dist/hello_linux_arm64
+            GOOS=linux GOARCH=amd64 go build -o ./dist/hello_linux_amd64 cmd/server/main.go
+            GOOS=linux GOARCH=arm64 go build -o ./dist/hello_linux_arm64 cmd/server/main.go
       outputs:
         - name: dist
         - name: meta
