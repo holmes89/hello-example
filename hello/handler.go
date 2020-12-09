@@ -2,6 +2,7 @@ package hello
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
 )
 
@@ -38,6 +39,7 @@ func NewLanguageHandler(service *LanguageService) *LanguageHandler {
 
 // List will return all languages
 func (h *LanguageHandler) List(w http.ResponseWriter, r *http.Request) {
+	fmt.Println("here")
 	res := h.service.ListLanguages()
 	encodeResponse(w, res)
 }

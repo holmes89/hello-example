@@ -41,6 +41,6 @@ func main() {
 }
 
 func debugHandler(w http.ResponseWriter, r *http.Request) {
-	fmt.Printf("URL: %+v", r.URL)
+	fmt.Printf("URL: %+v\n", r.URL)
 	fmt.Fprint(w, r.URL)
 }
