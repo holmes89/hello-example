@@ -6,21 +6,11 @@ import (
 	"net/http"
 
 	"github.com/holmes89/hello-example/hello"
-	"go.opencensus.io/trace"
 	"gocloud.dev/server"
-	"gocloud.dev/server/sdserver"
 )
 
 func main() {
-	addr := ":3000"
-	options := &server.Options{
-		RequestLogger: sdserver.NewRequestLogger(),
-		// In production you will likely want to use trace.ProbabilitySampler
-		// instead, since AlwaysSample will start and export a trace for every
-		// request - this may be prohibitively slow with significant traffic.
-		DefaultSamplingPolicy: trace.AlwaysSample(),
-		Driver:                &server.DefaultDriver{},
-	}
+	addr := ":8080"
 
 	mux := http.NewServeMux()
 	languageService := hello.NewLanguageService()
@@ -31,7 +21,7 @@ func main() {
 	mux.HandleFunc("/languages", languageHandler.List)
 	mux.HandleFunc("/", debugHandler)
 
-	s := server.New(mux, options)
+	s := server.New(mux, nil)
 	fmt.Printf("Listening on %s\n", addr)
 
 	err := s.ListenAndServe(addr)
