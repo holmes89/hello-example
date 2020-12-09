@@ -29,6 +29,7 @@ func main() {
 
 	mux.HandleFunc("/hello", helloHandler.Find)
 	mux.HandleFunc("/languages", languageHandler.List)
+	mux.HandleFunc("/", debugHandler)
 
 	s := server.New(mux, options)
 	fmt.Printf("Listening on %s\n", addr)
@@ -37,4 +38,9 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
+}
+
+func debugHandler(w http.ResponseWriter, r *http.Request) {
+	fmt.Printf("URL: %+v", r.URL)
+	fmt.Fprint(w, r.URL)
 }
