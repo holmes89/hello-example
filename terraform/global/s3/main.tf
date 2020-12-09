@@ -36,3 +36,7 @@ resource "aws_dynamodb_table" "hello_example_locks" {
     type = "S"
   }
 }
+
+resource "aws_s3_bucket" "hello_example_lambda" {
+  bucket = "hello-example-lambda"
+}

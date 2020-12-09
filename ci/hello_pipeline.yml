@@ -12,6 +12,13 @@ resources:
       owner: holmes89
       repository: hello-example
       access_token: ((github.access-token))
+  - name: lambda-release
+    type: s3
+    source:
+      bucket: hello-example-lambda
+      regexp: releases/server-(.*).zip
+      access_key_id: ((aws.access-key))
+      secret_access_key: ((aws.secret-access-key))
 
 jobs:
 - name: lint
@@ -73,19 +80,27 @@ jobs:
           - |
             echo "Hello API" > ./meta/name.txt
             cd hello-code
-            echo "$(git rev-parse --short HEAD)" > ../meta/tag.txt
+            export VERSION=$(git rev-parse --short HEAD)
+            echo "$VERSION" > ../meta/tag.txt
+            echo "Building Version: $VERSION"
             go get ./...
             GOOS=linux GOARCH=amd64 go build -o ../dist/hello_linux_amd64 cmd/server/main.go
             GOOS=linux GOARCH=arm64 go build -o ../dist/hello_linux_arm64 cmd/server/main.go
+            GOOS=linux go build -o server cmd/server/main.go
+            zip ../archives/server-$VERSION.zip server
       outputs:
         - name: dist
         - name: meta
+        - name: archives
   - put: gh-release
     params:
       name: meta/name.txt
       tag: meta/tag.txt
       globs:
         - dist/*
+  - put: lambda-release
+    params:
+        file: archives/*.zip
 - name: deploy-amd64-server
   plan:
     - get: gh-release
