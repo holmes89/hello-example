@@ -5,12 +5,12 @@ import (
 	"log"
 	"net/http"
 
+	"github.com/apex/gateway"
 	"github.com/holmes89/hello-example/hello"
-	"gocloud.dev/server"
 )
 
 func main() {
-	addr := ":8080"
+	addr := ":3000"
 
 	mux := http.NewServeMux()
 	languageService := hello.NewLanguageService()
@@ -19,18 +19,8 @@ func main() {
 
 	mux.HandleFunc("/hello", helloHandler.Find)
 	mux.HandleFunc("/languages", languageHandler.List)
-	mux.HandleFunc("/", debugHandler)
 
-	s := server.New(mux, nil)
-	fmt.Printf("Listening on %s\n", addr)
+	fmt.Printf("listening on %s\n", addr)
 
-	err := s.ListenAndServe(addr)
-	if err != nil {
-		log.Fatal(err)
-	}
-}
-
-func debugHandler(w http.ResponseWriter, r *http.Request) {
-	fmt.Printf("URL: %+v\n", r.URL)
-	fmt.Fprint(w, r.URL)
+	log.Fatal(gateway.ListenAndServe(addr, mux))
 }

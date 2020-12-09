@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"log"
 	"net/http"
 
@@ -8,12 +9,17 @@ import (
 )
 
 func main() {
+	addr := ":3000"
+
+	mux := http.NewServeMux()
 	languageService := hello.NewLanguageService()
 	helloHandler := hello.NewHelloHandler(languageService)
 	languageHandler := hello.NewLanguageHandler(languageService)
 
-	http.HandleFunc("/hello", helloHandler.Find)
-	http.HandleFunc("/languages", languageHandler.List)
-	log.Println("server running on :8080")
-	log.Fatal(http.ListenAndServe(":8080", nil))
+	mux.HandleFunc("/hello", helloHandler.Find)
+	mux.HandleFunc("/languages", languageHandler.List)
+
+	fmt.Printf("listening on %s\n", addr)
+
+	log.Fatal(http.ListenAndServe(":8081", mux))
 }
