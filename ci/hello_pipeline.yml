@@ -20,6 +20,12 @@ resources:
       regexp: releases/server-(.*).zip
       access_key_id: ((aws.access-key))
       secret_access_key: ((aws.secret-access-key))
+  - name: docker-image
+    type: docker-image
+    source:
+      repository: holmes89/hello-example
+      username: ((docker.username))
+      password: ((docker.access-token))
 
 jobs:
 - name: lint
@@ -59,6 +65,34 @@ jobs:
         path: /bin/sh
         args: 
           - ./hello-code/ci/test.sh
+- name: build-container
+  plan:
+  - get: hello-code
+    trigger: true
+    passed: [test]
+  - task: build
+    config:
+      platform: linux
+      inputs:
+        - name: hello-code
+      image_resource:
+        type: docker-image
+        source: {repository: golang}
+      run:
+        path: /bin/sh
+        args:
+          - -c
+          - |
+            cd hello-code
+            export VERSION=$(git rev-parse --short HEAD)
+            echo "$VERSION" > ../meta/tag.txt
+      outputs:
+        - name: meta
+  - put: docker-image
+    params:
+      build: hello-code
+      tag_file: meta/tag.txt
+      tag_as_latest: true
 - name: build-binary
   plan:
   - get: hello-code

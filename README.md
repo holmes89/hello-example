@@ -58,6 +58,7 @@ terraform apply
 
 - `vault kv put concourse/main/github private-key="$(cat ~/.ssh/YOUR_PRIVATE_KEY)" access-token="$GITHUB_KEY"`
 - `vault kv put concourse/main/aws access-key="$AWS_ACCESS_KEY_ID" secret-access-key="$AWS_SECRET_ACCESS_KEY"`
+- `vault kv put concourse/main/docker username="holmes89" access-token="$DOCKER_ACCESS_TOKEN"`
 - `fly --target hello login --concourse-url http://127.0.0.1:8080 -u admin -p admin`
 - `fly -t hello set-pipeline -c hello_pipeline.yml -p hello`
 
