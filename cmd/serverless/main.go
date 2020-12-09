@@ -12,7 +12,7 @@ import (
 )
 
 func main() {
-	addr := ":8080"
+	addr := ":3000"
 	options := &server.Options{
 		RequestLogger: sdserver.NewRequestLogger(),
 		// In production you will likely want to use trace.ProbabilitySampler
