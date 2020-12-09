@@ -16,5 +16,5 @@ module "serverless" {
     source = "../../../modules/services/serverless"
     function_name = "hello-serverless"
     source_bucket = "hello-example-lambda"
-    source_file = "${var.file_name}"
+    source_file = var.file_name
 }

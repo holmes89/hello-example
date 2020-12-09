@@ -16,6 +16,7 @@ resources:
     type: s3
     source:
       bucket: hello-example-lambda
+      region_name: us-east-2
       regexp: releases/server-(.*).zip
       access_key_id: ((aws.access-key))
       secret_access_key: ((aws.secret-access-key))
@@ -78,6 +79,8 @@ jobs:
         args:
           - -c
           - |
+            apt-get update
+            apt-get install -y zip
             echo "Hello API" > ./meta/name.txt
             cd hello-code
             export VERSION=$(git rev-parse --short HEAD)
@@ -86,7 +89,7 @@ jobs:
             go get ./...
             GOOS=linux GOARCH=amd64 go build -o ../dist/hello_linux_amd64 cmd/server/main.go
             GOOS=linux GOARCH=arm64 go build -o ../dist/hello_linux_arm64 cmd/server/main.go
-            GOOS=linux go build -o server cmd/server/main.go
+            GOOS=linux go build -o server cmd/serverless/main.go
             zip ../archives/server-$VERSION.zip server
       outputs:
         - name: dist
@@ -189,3 +192,24 @@ jobs:
           path: /bin/sh
           args:
             - ./hello-code/ci/terraform-deploy-server.sh
+- name: deploy-serverless
+  plan:
+    - get: lambda-release
+      passed: [build-binary]
+      trigger: true
+    - get: hello-code
+    - task: deploy-arm64
+      config:
+        platform: linux
+        params:
+          AWS_ACCESS_KEY_ID: ((aws.access-key)) 
+          AWS_SECRET_ACCESS_KEY: ((aws.secret-access-key))
+        inputs:
+          - name: hello-code
+        image_resource:
+          type: registry-image
+          source: { repository: hashicorp/terraform, tag: light }
+        run:
+          path: /bin/sh
+          args:
+            - ./hello-code/ci/terraform-deploy-serverless.sh
