@@ -108,3 +108,31 @@ resource "aws_api_gateway_deployment" "rest_api" {
    rest_api_id = aws_api_gateway_rest_api.rest_api.id
    stage_name  = var.environment
 }
+
+resource "aws_iam_policy" "lambda_logging" {
+  name = "${var.function_name}_lambda_logging"
+  path = "/"
+  description = "IAM policy for logging from a lambda"
+
+  policy = <<EOF
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Action": [
+        "logs:CreateLogGroup",
+        "logs:CreateLogStream",
+        "logs:PutLogEvents"
+      ],
+      "Resource": "arn:aws:logs:*:*:*",
+      "Effect": "Allow"
+    }
+  ]
+}
+EOF
+}
+
+resource "aws_iam_role_policy_attachment" "lambda_logs" {
+  role = aws_iam_role.lambda_exec.name
+  policy_arn = aws_iam_policy.lambda_logging.arn
+}
