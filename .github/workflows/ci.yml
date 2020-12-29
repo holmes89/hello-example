@@ -23,7 +23,7 @@ jobs:
       uses: actions/checkout@v2
       
     - name: Lint
-      run: ci/lint-stage.sh
+      run: ci/lint.sh
     
     - name: Test
-      run: ci/test-stage.sh
+      run: ci/test.sh
